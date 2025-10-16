@@ -1,11 +1,16 @@
 import * as vscode from 'vscode';
-import { LmApiProxyServer } from './server';
+import { LmApiProxyServer } from './server/server';
+import { logger, LogLevel } from './utils/logger';
+import { modelManager } from './model/manager';
 
 let proxyServer: LmApiProxyServer | undefined;
 let statusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('LM API Proxy extension activated');
+    logger.info('LM API Proxy extension activated');
+
+    // Initialize model manager
+    modelManager.initialize(context.globalState);
 
     // Create status bar item
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -27,7 +32,52 @@ export function activate(context: vscode.ExtensionContext) {
         showStatus();
     });
 
-    context.subscriptions.push(startCommand, stopCommand, statusCommand);
+    // Register model selection command
+    const selectModelCommand = vscode.commands.registerCommand('lmApiProxy.selectModel', async () => {
+        await modelManager.selectModel();
+    });
+
+    // Register log level command
+    const setLogLevelCommand = vscode.commands.registerCommand('lmApiProxy.setLogLevel', async () => {
+        const items = [
+            { label: 'DEBUG (0)', description: 'Show all logs including detailed debug information', level: LogLevel.DEBUG },
+            { label: 'INFO (1)', description: 'Show informational messages and above', level: LogLevel.INFO },
+            { label: 'WARN (2)', description: 'Show warnings and errors only', level: LogLevel.WARN },
+            { label: 'ERROR (3)', description: 'Show errors only', level: LogLevel.ERROR },
+        ];
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select log level',
+            title: 'LM API Proxy - Log Level',
+        });
+
+        if (selected) {
+            logger.setLogLevel(selected.level);
+            const config = vscode.workspace.getConfiguration('lmApiProxy');
+            await config.update('logLevel', selected.level, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage(`Log level set to: ${selected.label}`);
+        }
+    });
+
+    // Register show/clear output commands
+    const showOutputCommand = vscode.commands.registerCommand('lmApiProxy.showOutput', () => {
+        logger.show();
+    });
+
+    const clearOutputCommand = vscode.commands.registerCommand('lmApiProxy.clearOutput', () => {
+        logger.clear();
+        logger.info('Output cleared');
+    });
+
+    context.subscriptions.push(
+        startCommand,
+        stopCommand,
+        statusCommand,
+        selectModelCommand,
+        setLogLevelCommand,
+        showOutputCommand,
+        clearOutputCommand
+    );
 
     // Listen for configuration changes
     const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
@@ -49,7 +99,7 @@ export function deactivate() {
         proxyServer.stop();
         proxyServer = undefined;
     }
-    console.log('LM API Proxy extension deactivated');
+    logger.info('LM API Proxy extension deactivated');
 }
 
 async function startProxyServer(): Promise<void> {
@@ -96,12 +146,12 @@ async function startProxyServer(): Promise<void> {
             }
         });
 
-        console.log(message);
+        logger.info(message);
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         vscode.window.showErrorMessage(`Failed to start LM API Proxy server: ${errorMessage}`);
-        console.error('Failed to start proxy server:', error);
+        logger.error('Failed to start proxy server', error as Error);
         updateStatusBar();
     }
 }
@@ -117,11 +167,11 @@ async function stopProxyServer(): Promise<void> {
         proxyServer = undefined;
         updateStatusBar();
         vscode.window.showInformationMessage('LM API Proxy server stopped');
-        console.log('LM API Proxy server stopped');
+        logger.info('LM API Proxy server stopped');
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         vscode.window.showErrorMessage(`Failed to stop LM API Proxy server: ${errorMessage}`);
-        console.error('Failed to stop proxy server:', error);
+        logger.error('Failed to stop proxy server', error as Error);
     }
 }
 

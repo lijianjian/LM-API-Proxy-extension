@@ -3,7 +3,7 @@ import json
 
 def test_simple_request():
     """测试最简单的请求格式"""
-    url = "http://127.0.0.1:3000/v1/chat/completions"
+    url = "http://10.14.0.187:3000/v1/chat/completions"
     
     print("🧪 测试简单聊天请求...")
     
@@ -56,13 +56,13 @@ def test_simple_request():
 
 def test_with_model():
     """测试指定模型的请求"""
-    url = "http://127.0.0.1:3000/v1/chat/completions"
+    url = "http://10.14.0.187:3000/v1/chat/completions"
     
     print("\n🧪 测试指定模型请求...")
     
     # 先获取可用模型
     try:
-        models_response = requests.get("http://127.0.0.1:3000/v1/models", timeout=10)
+        models_response = requests.get("http://10.14.0.187:3000/v1/models", timeout=10)
         if models_response.status_code == 200:
             models = models_response.json()
             if models.get('data') and len(models['data']) > 0:

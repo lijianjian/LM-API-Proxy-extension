@@ -15,15 +15,31 @@
     "commands": [
       {
         "command": "lmApiProxy.start",
-        "title": "Start LM API Proxy Server"
+        "title": "LM Proxy: Start Server"
       },
       {
         "command": "lmApiProxy.stop",
-        "title": "Stop LM API Proxy Server"
+        "title": "LM Proxy: Stop Server"
       },
       {
         "command": "lmApiProxy.status",
-        "title": "Show LM API Proxy Status"
+        "title": "LM Proxy: Show Status"
+      },
+      {
+        "command": "lmApiProxy.selectModel",
+        "title": "LM Proxy: Select Model"
+      },
+      {
+        "command": "lmApiProxy.setLogLevel",
+        "title": "LM Proxy: Set Log Level"
+      },
+      {
+        "command": "lmApiProxy.showOutput",
+        "title": "LM Proxy: Show Output Panel"
+      },
+      {
+        "command": "lmApiProxy.clearOutput",
+        "title": "LM Proxy: Clear Output Panel"
       }
     ],
     "configuration": {
@@ -43,6 +59,23 @@
           "type": "boolean",
           "default": true,
           "description": "Enable CORS support for cross-origin requests"
+        },
+        "lmApiProxy.logLevel": {
+          "type": "number",
+          "default": 1,
+          "enum": [0, 1, 2, 3],
+          "enumDescriptions": [
+            "DEBUG - Show all logs including detailed debug information",
+            "INFO - Show informational messages and above (default)",
+            "WARN - Show warnings and errors only",
+            "ERROR - Show errors only"
+          ],
+          "description": "Log level for the extension output"
+        },
+        "lmApiProxy.showOutputOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically show output panel when extension starts"
         }
       }
     }
