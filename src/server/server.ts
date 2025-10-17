@@ -140,6 +140,12 @@ export class LmApiProxyServer {
         this.app.post('/v1/chat/completions', async (req, res) => {
             const requestId = generateRequestId();
             logger.info(`Chat completion request started: ${requestId}`);
+            
+            // Log request details in DEBUG mode
+            logger.logRequest('POST', '/v1/chat/completions', req.body, {
+                'content-type': req.get('content-type'),
+                'user-agent': req.get('user-agent')
+            });
 
             try {
                 const requestBody: OpenAIChatCompletionRequest = req.body;
@@ -234,7 +240,17 @@ export class LmApiProxyServer {
 
                 logger.info(`Chat completion request completed: ${requestId}`);
             } catch (error) {
-                logger.error(`Chat completion request failed: ${requestId}`, error as Error);
+                // Log detailed error with full context
+                logger.logApiError({
+                    operation: 'chat.completions',
+                    model: req.body.model,
+                    requestBody: req.body,
+                    error: error,
+                    additionalInfo: {
+                        requestId,
+                        timestamp: new Date().toISOString()
+                    }
+                });
 
                 if (error instanceof vscode.LanguageModelError) {
                     const { statusCode, errorResponse } = handleVSCodeError(error);
@@ -262,7 +278,8 @@ export class LmApiProxyServer {
         res: express.Response
     ): Promise<void> {
         try {
-            logger.debug('Sending request to VS Code LM API');
+            logger.debug(`Sending non-streaming request to VS Code LM API, model: ${model.id}`);
+            logger.debug('VS Code request messages', { messageCount: messages.length, options });
 
             const response = await model.sendRequest(messages, options);
             const openAIResponse = await convertVSCodeResponseToOpenAI(
@@ -277,7 +294,17 @@ export class LmApiProxyServer {
 
             res.json(openAIResponse);
         } catch (error) {
-            logger.error('Error in non-streaming request', error as Error);
+            // Log detailed error with context
+            logger.logApiError({
+                operation: 'non-streaming request',
+                model: model.id,
+                error: error,
+                additionalInfo: {
+                    requestId,
+                    messageCount: messages.length,
+                    options
+                }
+            });
             throw error;
         }
     }

@@ -1,8 +1,27 @@
 {
   "name": "vscode-lm-api-proxy",
   "displayName": "VS Code LM API Proxy",
-  "description": "A VS Code extension that wraps Language Model API as a local HTTP proxy server",
-  "version": "0.0.1",
+  "description": "OpenAI & Anthropic compatible proxy for VS Code Language Model API",
+  "version": "0.0.3",
+  "author": "lijianjian",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lijianjian/vs-code-lm-api-proxy.git"
+  },
+  "homepage": "https://github.com/lijianjian/vs-code-lm-api-proxy#readme",
+  "bugs": {
+    "url": "https://github.com/lijianjian/vs-code-lm-api-proxy/issues"
+  },
+  "keywords": [
+    "vscode",
+    "language-model",
+    "openai",
+    "anthropic",
+    "api-proxy",
+    "github-copilot",
+    "chat-completions"
+  ],
   "engines": {
     "vscode": "^1.102.0"
   },

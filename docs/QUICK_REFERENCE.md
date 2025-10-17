@@ -1,5 +1,7 @@
 # 快速参考指南 - VS Code LM API Proxy
 
+**语言**: [English](./QUICK_REFERENCE_EN.md) | [中文](./QUICK_REFERENCE.md)
+
 ## 🚀 5分钟上手
 
 ### 1. 启动扩展

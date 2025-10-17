@@ -101,6 +101,127 @@ export class Logger {
     }
 
     /**
+     * Log request details (only in DEBUG mode)
+     */
+    public logRequest(method: string, path: string, body: any, headers?: any): void {
+        if (this.currentLogLevel <= LogLevel.DEBUG) {
+            const details = {
+                method,
+                path,
+                body: this.sanitizeForLog(body),
+                headers: headers ? this.sanitizeHeaders(headers) : undefined
+            };
+            this.outputChannel.appendLine(
+                this.formatMessage('DEBUG', `Request:\n${JSON.stringify(details, null, 2)}`)
+            );
+        }
+    }
+
+    /**
+     * Log response details (only in DEBUG mode)
+     */
+    public logResponse(statusCode: number, body: any): void {
+        if (this.currentLogLevel <= LogLevel.DEBUG) {
+            const details = {
+                statusCode,
+                body: this.sanitizeForLog(body)
+            };
+            this.outputChannel.appendLine(
+                this.formatMessage('DEBUG', `Response:\n${JSON.stringify(details, null, 2)}`)
+            );
+        }
+    }
+
+    /**
+     * Log API error with full context
+     */
+    public logApiError(context: {
+        operation: string;
+        model?: string;
+        requestBody?: any;
+        error: Error | any;
+        additionalInfo?: any;
+    }): void {
+        let fullMessage = `API Error in ${context.operation}`;
+        
+        if (context.model) {
+            fullMessage += `\n  Model: ${context.model}`;
+        }
+        
+        if (context.requestBody) {
+            fullMessage += `\n  Request Body: ${JSON.stringify(this.sanitizeForLog(context.requestBody), null, 2)}`;
+        }
+        
+        if (context.error) {
+            if (context.error instanceof Error) {
+                fullMessage += `\n  Error: ${context.error.message}`;
+                fullMessage += `\n  Stack: ${context.error.stack}`;
+            } else {
+                fullMessage += `\n  Error: ${JSON.stringify(context.error, null, 2)}`;
+            }
+        }
+        
+        if (context.additionalInfo) {
+            fullMessage += `\n  Additional Info: ${JSON.stringify(context.additionalInfo, null, 2)}`;
+        }
+        
+        this.outputChannel.appendLine(this.formatMessage('ERROR', fullMessage));
+    }
+
+    /**
+     * Sanitize data for logging (truncate long strings, hide sensitive data)
+     */
+    private sanitizeForLog(data: any, maxLength: number = 1000): any {
+        if (data === null || data === undefined) {
+            return data;
+        }
+
+        if (typeof data === 'string') {
+            return data.length > maxLength 
+                ? data.substring(0, maxLength) + `... (${data.length - maxLength} more chars)`
+                : data;
+        }
+
+        if (Array.isArray(data)) {
+            return data.map(item => this.sanitizeForLog(item, maxLength));
+        }
+
+        if (typeof data === 'object') {
+            const sanitized: any = {};
+            for (const [key, value] of Object.entries(data)) {
+                // Hide potential sensitive fields
+                if (key.toLowerCase().includes('token') || 
+                    key.toLowerCase().includes('key') || 
+                    key.toLowerCase().includes('secret')) {
+                    sanitized[key] = '***REDACTED***';
+                } else {
+                    sanitized[key] = this.sanitizeForLog(value, maxLength);
+                }
+            }
+            return sanitized;
+        }
+
+        return data;
+    }
+
+    /**
+     * Sanitize headers for logging
+     */
+    private sanitizeHeaders(headers: any): any {
+        const sanitized: any = {};
+        for (const [key, value] of Object.entries(headers)) {
+            if (key.toLowerCase().includes('auth') || 
+                key.toLowerCase().includes('token') || 
+                key.toLowerCase().includes('key')) {
+                sanitized[key] = '***REDACTED***';
+            } else {
+                sanitized[key] = value;
+            }
+        }
+        return sanitized;
+    }
+
+    /**
      * Show output channel
      */
     public show(preserveFocus: boolean = false): void {
